@@ -6,6 +6,9 @@ from chainer import optimizers
 from chainer import training
 from chainer.training import extensions
 
+import os
+import glob
+
 
 class HotDogDetecter(chainer.Chain):
     def __init__(self):
@@ -53,11 +56,24 @@ def mnist_train():
     trainer.extend(extensions.ProgressBar())
     #trainer.extend(extensions.Snapshot((10, 'epoch')))
 
-    trainer.run()    
+    trainer.run()
+
+
+def load_images():
+    IMG_DIR = './data/'
+    dir_names = glob.glob('{}/*'.format(IMG_DIR))
+    file_names = [glob.glob('{}/*.png'.format(dir)) for dir in dir_names]
+    file_names = list(chain.from_iterable(file_names))
+    
+    labels = [os.path.basename(os.path.dirname(file)) for file in fnames]
+    dir_names = [os.path.basename(dir) for dir in dir_names]
+    labels = [dnames.index(label) for label in labels]
+
+    d = datasets.LabeledImageDataset(list(zip(file_names, labels)))
 
 
 def main():
-    mnist_train()
+    #mnist_train()
 
 
 if __name__ == '__main__':
