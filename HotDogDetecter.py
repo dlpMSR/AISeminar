@@ -28,7 +28,7 @@ class HotDogDetecter(chainer.Chain):
 
 def mnist_train():
     #データセットの取得
-    train_full, test_full = datasets.get_mnist()
+    train_full, test_full = datasets.get_mnist(ndim=3)
     train = datasets.SubDataset(train_full, 0, 1000)
     test = datasets.SubDataset(test_full, 0, 1000)
 
@@ -42,7 +42,7 @@ def mnist_train():
     opt = chainer.optimizers.Adam()
     opt.setup(model)
 
-    epoch = 2
+    epoch = 100
 
     updater = training.StandardUpdater(train_iter, opt, device=-1)
     trainer = training.Trainer(updater, (epoch, 'epoch'), out='result')
