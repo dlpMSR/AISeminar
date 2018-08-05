@@ -1,62 +1,63 @@
 import chainer
-import chainer.links as L
-import chainer.functions as F
+from chainer import datasets
+from chainer import functions as F 
+from chainer import links as L 
 from chainer import optimizers
+from chainer import training
+from chainer.training import extensions
 
-class HotDogDetecter(chainer.chain):
+
+class HotDogDetecter(chainer.Chain):
     def __init__(self):
-        super(HotDogDetecter, self).__init__(
-            conv1 = L.Convolution2D(None, out_channels=8, ksize=3),
-            conv2 = L.Convolution2D(None, out_channels=16, ksize=3),
-            fc1 = L.Linear(None, 256)
-            fc2 = L.Linear(256, 10)
-        )
+        super(HotDogDetecter, self).__init__()
+        with self.init_scope():
+            self.conv1 = L.Convolution2D(None, out_channels=8, ksize=3)
+            self.conv2 = L.Convolution2D(None, out_channels=16, ksize=3)
+            self.fc1 = L.Linear(None, 256)
+            self.fc2 = L.Linear(256, 10)
+        
 
-        def __call__(self, x):
-            h = self.conv1(x)
-            h = self.conv2(h)
-            h = F.max_pooling_2d(h, ksize=3, stride=1)
-            h = F.sigmoid(fc1(h))
-            h = F.softmax(fc2(h))   
-            return h
-
-
-def mnist_train()):
-    train_, test_ = chainer.datasets.get_mnist()
-    train_data, train_label = train_._datasets
-    test_data,  test_label  = test_._datasets
-    train_data = train_data.reshape((len(train_data)), 1, 28, 28)
-    test_data  = test_data.reshape((len(test_data)), 1, 28, 28)
-
-    hdd_cnn = HotDogDetecter()
-    hdd_cls = L.Classifier(hdd_cnn, lossfun=F.softmax_cross_entropy)
-
-    cuda.get_device(-1).use()
-    hdd_cls.to_gpu()
-
-    optimizer = optimizers.Adam()
-    optimizer.setup(hdd_cls)
-
-    batchsize = 1
-    train_datasize = 60000
-    valid_datasize = 10000
-
-    for epoch in range(20):
-    print('epoch', epoch)
-    # training
-    perm = np.random.permutation(N)
-    sum_accuracy = 0
-    sum_loss = 0
-    for i in six.moves.range(0, N, batchsize):
-        x = chainer.Variable(xp.asarray(x_train[perm[i:i + batchsize]]))
-        t = chainer.Variable(xp.asarray(y_train[perm[i:i + batchsize]]))
-
-        # Pass the loss function (Classifier defines it) and its arguments
-        optimizer.update(model, x, t)
+    def __call__(self, x):
+        h = self.conv1(x)
+        h = self.conv2(h)
+        h = F.max_pooling_2d(h, ksize=3, stride=1)
+        h = F.sigmoid(self.fc1(h))
+        h = F.softmax(self.fc2(h))
+        return h
 
 
-    
+def mnist_train():
+    #データセットの取得
+    train_full, test_full = datasets.get_mnist()
+    train = datasets.SubDataset(train_full, 0, 1000)
+    test = datasets.SubDataset(test_full, 0, 1000)
 
+    #Set up a iterator
+    batchsize = 100
+    train_iter = chainer.iterators.SerialIterator(train, batchsize)
+    test_iter = chainer.iterators.SerialIterator(test, batchsize,
+                                                 repeat=False, shuffle=False)
+
+    model = L.Classifier(HotDogDetecter())
+    opt = chainer.optimizers.Adam()
+    opt.setup(model)
+
+    epoch = 2
+
+    updater = training.StandardUpdater(train_iter, opt, device=-1)
+    trainer = training.Trainer(updater, (epoch, 'epoch'), out='result')
+
+    trainer.extend(extensions.LogReport())
+    trainer.extend(extensions.PrintReport(['epoch', 'main/loss', 'validation/main/loss',
+                                           'main/accuracy', 'validation/main/accuracy']))
+    trainer.extend(extensions.ProgressBar())
+    #trainer.extend(extensions.Snapshot((10, 'epoch')))
+
+    trainer.run()    
+
+
+def main():
+    mnist_train()
 
 
 if __name__ == '__main__':
