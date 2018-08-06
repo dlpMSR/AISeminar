@@ -140,6 +140,7 @@ def load_images():
         img = img[:3, ...]
         img = resize(img.astype(np.uint8))
         img = img.astype(np.float32)
+        img = img / 255
         return img, label
     
     transformed_d = datasets.TransformDataset(d, transform)
