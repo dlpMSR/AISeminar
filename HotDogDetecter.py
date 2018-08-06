@@ -14,14 +14,14 @@ import glob
 from itertools import chain
 
 
-class HotDogDetecter(chainer.Chain):
+class Normal(chainer.Chain):
     def __init__(self):
-        super(HotDogDetecter, self).__init__()
+        super(Normal, self).__init__()
         with self.init_scope():
             self.conv1 = L.Convolution2D(None, out_channels=8, ksize=3)
             self.conv2 = L.Convolution2D(None, out_channels=16, ksize=3)
             self.fc1 = L.Linear(None, 256)
-            self.fc2 = L.Linear(256, 2)
+            self.fc2 = L.Linear(None, 10)
         
 
     def __call__(self, x):
@@ -32,24 +32,46 @@ class HotDogDetecter(chainer.Chain):
         h = F.softmax(self.fc2(h))
         return h
 
+class Normalize(chainer.Chain):
+    def __init__(self):
+        super(Normalize, self).__init__()
+        with self.init_scope():
+            self.conv1 = L.Convolution2D(None, out_channels=8, ksize=3)
+            self.bn1 = L.BatchNormalization(8)
+            self.conv2 = L.Convolution2D(None, out_channels=16, ksize=3)
+            self.fc1 = L.Linear(None, 256)
+            self.bn2 = L.BatchNormalization(256)
+            self.fc2 = L.Linear(None, 3)
+        
 
-def mnist_train():
+    def __call__(self, x):
+        h = self.conv1(x)
+        h = self.bn1(h)
+        h = self.conv2(h)
+        h = F.max_pooling_2d(h, ksize=3, stride=1)
+        h = F.sigmoid(self.fc1(h))
+        h = self.bn2(h)
+        h = F.softmax(self.fc2(h))
+        return h
+
+
+def cifar10_train():
     #データセットの取得
-    train_full, test_full = datasets.get_mnist(ndim=3)
+    train_full, test_full = datasets.get_cifar10()
     train = datasets.SubDataset(train_full, 0, 1000)
     test = datasets.SubDataset(test_full, 0, 1000)
 
     #Set up a iterator
-    batchsize = 100
+    batchsize = 60
     train_iter = chainer.iterators.SerialIterator(train, batchsize)
     test_iter = chainer.iterators.SerialIterator(test, batchsize,
                                                  repeat=False, shuffle=False)
 
-    model = L.Classifier(HotDogDetecter())
+    model = L.Classifier(Normal())
     opt = chainer.optimizers.Adam()
     opt.setup(model)
 
-    epoch = 100
+    epoch = 200
 
     updater = training.StandardUpdater(train_iter, opt, device=0)
     trainer = training.Trainer(updater, (epoch, 'epoch'), out='result')
@@ -66,21 +88,21 @@ def mnist_train():
 def hotdog_train():
     #データセットの取得
     dataset = load_images()
-    train, test = datasets.split_dataset_random(dataset, int(len(dataset) * 0.8))
+    train, test = datasets.split_dataset_random(dataset, int(len(dataset) * 0.9))
 
     #Set up a iterator
-    batchsize = 1
+    batchsize = 128
     train_iter = chainer.iterators.SerialIterator(train, batchsize)
     test_iter = chainer.iterators.SerialIterator(test, batchsize,
                                                  repeat=False, shuffle=False)
 
-    model = L.Classifier(HotDogDetecter())
-    opt = chainer.optimizers.Adam()
+    model = L.Classifier(Normal())
+    opt = chainer.optimizers.SGD()
     opt.setup(model)
 
-    epoch = 20
+    epoch = 1000
 
-    updater = training.StandardUpdater(train_iter, opt, device=-1)
+    updater = training.StandardUpdater(train_iter, opt, device=0)
     trainer = training.Trainer(updater, (epoch, 'epoch'), out='result')
 
     trainer.extend(extensions.LogReport())
@@ -88,6 +110,9 @@ def hotdog_train():
                                            'main/accuracy', 'validation/main/accuracy']))
     trainer.extend(extensions.ProgressBar())
     #trainer.extend(extensions.Snapshot((10, 'epoch')))
+
+    trainer.extend(extensions.PlotReport(['main/accuracy', 'validation/main/accuracy'], x_key='epoch', file_name='accuracy.png'))
+    trainer.extend(extensions.dump_graph('main/loss'))
 
     trainer.run()
 
@@ -105,7 +130,7 @@ def load_images():
     d = datasets.LabeledImageDataset(list(zip(file_names, labels)))
 
     def resize(img):
-        width, height = 256, 256
+        width, height = 128, 128
         img = Image.fromarray(img.transpose(1, 2, 0))
         img = img.resize((width, height), Image.BICUBIC)
         return np.asarray(img).transpose(2, 0, 1)
@@ -124,7 +149,7 @@ def load_images():
 
 def main():
     hotdog_train()
-    #mnist_train()
+    #cifar10_train()
 
 
 if __name__ == '__main__':
