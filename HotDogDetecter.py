@@ -85,15 +85,15 @@ def cifar10_train():
 
 
 def hotdog_train():
-    #データセットの取得
-    dataset = load_images()
-    train, test = datasets.split_dataset_random(dataset, int(len(dataset) * 0.9))
-    
+    train = load_images('./data/train')
+    test = load_images('./data/test')
+    #dataset = load_images()
+    #train, test = datasets.split_dataset_random(dataset, int(len(dataset) * 0.9))
+
     batchsize = 16
     epoch = 20
     gpu_id = 0
 
-    #Set up a iterator
     train_iter = chainer.iterators.SerialIterator(train, batchsize)
     test_iter = chainer.iterators.SerialIterator(test, batchsize,
                                                  repeat=False, shuffle=False)
@@ -113,22 +113,19 @@ def hotdog_train():
     trainer.extend(extensions.PlotReport(['main/accuracy', 'validation/main/accuracy'],
                                          x_key='epoch', file_name='accuracy.png'))
     trainer.extend(extensions.dump_graph('main/loss'))
-
     trainer.run()
 
 
-def load_images():
-    IMG_DIR = './data/'
+def load_images(IMG_DIR):
     dir_names = glob.glob('{}/*'.format(IMG_DIR))
     file_names = [glob.glob('{}/*.jpg'.format(dir)) for dir in dir_names]
     file_names = list(chain.from_iterable(file_names))
-    
     labels = [os.path.basename(os.path.dirname(file)) for file in file_names]
     dir_names = [os.path.basename(dir) for dir in dir_names]
     labels = [dir_names.index(label) for label in labels]
 
     d = datasets.LabeledImageDataset(list(zip(file_names, labels)))
-
+    
     def resize(img):
         width, height = 128, 128
         img = Image.fromarray(img.transpose(1, 2, 0))
@@ -144,9 +141,8 @@ def load_images():
         return img, label
     
     transformed_d = datasets.TransformDataset(d, transform)
-
     return transformed_d
-
+    
 
 def main():
     hotdog_train()
