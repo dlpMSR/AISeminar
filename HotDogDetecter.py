@@ -21,9 +21,8 @@ class Normal(chainer.Chain):
             self.conv1 = L.Convolution2D(None, out_channels=8, ksize=3)
             self.conv2 = L.Convolution2D(None, out_channels=16, ksize=3)
             self.fc1 = L.Linear(None, 256)
-            self.fc2 = L.Linear(None, 10)
+            self.fc2 = L.Linear(None, 2)
         
-
     def __call__(self, x):
         h = self.conv1(x)
         h = self.conv2(h)
@@ -31,6 +30,7 @@ class Normal(chainer.Chain):
         h = F.sigmoid(self.fc1(h))
         h = F.softmax(self.fc2(h))
         return h
+
 
 class Normalize(chainer.Chain):
     def __init__(self):
@@ -42,8 +42,7 @@ class Normalize(chainer.Chain):
             self.fc1 = L.Linear(None, 256)
             self.bn2 = L.BatchNormalization(256)
             self.fc2 = L.Linear(None, 3)
-        
-
+    
     def __call__(self, x):
         h = self.conv1(x)
         h = self.bn1(h)
@@ -89,29 +88,30 @@ def hotdog_train():
     #データセットの取得
     dataset = load_images()
     train, test = datasets.split_dataset_random(dataset, int(len(dataset) * 0.9))
+    
+    batchsize = 16
+    epoch = 20
+    gpu_id = 0
 
     #Set up a iterator
-    batchsize = 128
     train_iter = chainer.iterators.SerialIterator(train, batchsize)
     test_iter = chainer.iterators.SerialIterator(test, batchsize,
                                                  repeat=False, shuffle=False)
-
-    model = L.Classifier(Normal())
-    opt = chainer.optimizers.SGD()
+    model = L.Classifier(Normal(), lossfun=F.softmax_cross_entropy)
+    opt = chainer.optimizers.SGD(lr=0.01)
     opt.setup(model)
 
-    epoch = 1000
-
-    updater = training.StandardUpdater(train_iter, opt, device=0)
+    updater = training.StandardUpdater(train_iter, opt, device=gpu_id)
     trainer = training.Trainer(updater, (epoch, 'epoch'), out='result')
 
     trainer.extend(extensions.LogReport())
+    trainer.extend(extensions.ProgressBar())
+    trainer.extend(extensions.snapshot(filename='snapshot_epoch-{.updater.epoch}'))
+    trainer.extend(extensions.Evaluator(test_iter, model, device=gpu_id))
     trainer.extend(extensions.PrintReport(['epoch', 'main/loss', 'validation/main/loss',
                                            'main/accuracy', 'validation/main/accuracy']))
-    trainer.extend(extensions.ProgressBar())
-    #trainer.extend(extensions.Snapshot((10, 'epoch')))
-
-    trainer.extend(extensions.PlotReport(['main/accuracy', 'validation/main/accuracy'], x_key='epoch', file_name='accuracy.png'))
+    trainer.extend(extensions.PlotReport(['main/accuracy', 'validation/main/accuracy'],
+                                         x_key='epoch', file_name='accuracy.png'))
     trainer.extend(extensions.dump_graph('main/loss'))
 
     trainer.run()
