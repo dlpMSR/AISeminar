@@ -54,36 +54,6 @@ class Normalize(chainer.Chain):
         return h
 
 
-def cifar10_train():
-    #データセットの取得
-    train_full, test_full = datasets.get_cifar10()
-    train = datasets.SubDataset(train_full, 0, 1000)
-    test = datasets.SubDataset(test_full, 0, 1000)
-
-    #Set up a iterator
-    batchsize = 60
-    train_iter = chainer.iterators.SerialIterator(train, batchsize)
-    test_iter = chainer.iterators.SerialIterator(test, batchsize,
-                                                 repeat=False, shuffle=False)
-
-    model = L.Classifier(Normal())
-    opt = chainer.optimizers.Adam()
-    opt.setup(model)
-
-    epoch = 200
-
-    updater = training.StandardUpdater(train_iter, opt, device=0)
-    trainer = training.Trainer(updater, (epoch, 'epoch'), out='result')
-
-    trainer.extend(extensions.LogReport())
-    trainer.extend(extensions.PrintReport(['epoch', 'main/loss', 'validation/main/loss',
-                                           'main/accuracy', 'validation/main/accuracy']))
-    trainer.extend(extensions.ProgressBar())
-    #trainer.extend(extensions.Snapshot((10, 'epoch')))
-
-    trainer.run()
-
-
 def hotdog_train():
     train = load_images('./data/train')
     test = load_images('./data/test')
