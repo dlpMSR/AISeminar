@@ -13,45 +13,9 @@ import os
 import glob
 from itertools import chain
 
-
-class Normal(chainer.Chain):
-    def __init__(self):
-        super(Normal, self).__init__()
-        with self.init_scope():
-            self.conv1 = L.Convolution2D(None, out_channels=8, ksize=3)
-            self.conv2 = L.Convolution2D(None, out_channels=16, ksize=3)
-            self.fc1 = L.Linear(None, 256)
-            self.fc2 = L.Linear(None, 2)
-        
-    def __call__(self, x):
-        h = self.conv1(x)
-        h = self.conv2(h)
-        h = F.max_pooling_2d(h, ksize=3, stride=1)
-        h = F.sigmoid(self.fc1(h))
-        h = F.softmax(self.fc2(h))
-        return h
-
-
-class Normalize(chainer.Chain):
-    def __init__(self):
-        super(Normalize, self).__init__()
-        with self.init_scope():
-            self.conv1 = L.Convolution2D(None, out_channels=8, ksize=3)
-            self.bn1 = L.BatchNormalization(8)
-            self.conv2 = L.Convolution2D(None, out_channels=16, ksize=3)
-            self.fc1 = L.Linear(None, 256)
-            self.bn2 = L.BatchNormalization(256)
-            self.fc2 = L.Linear(None, 3)
-    
-    def __call__(self, x):
-        h = self.conv1(x)
-        h = self.bn1(h)
-        h = self.conv2(h)
-        h = F.max_pooling_2d(h, ksize=3, stride=1)
-        h = F.sigmoid(self.fc1(h))
-        h = self.bn2(h)
-        h = F.softmax(self.fc2(h))
-        return h
+import models.VGG
+import models.Pt1_Normal
+import models.Pt2_Normalize
 
 
 def hotdog_train():
@@ -62,12 +26,14 @@ def hotdog_train():
 
     batchsize = 16
     epoch = 20
-    gpu_id = 0
+    gpu_id = -1
+    #class_labels = 5
 
     train_iter = chainer.iterators.SerialIterator(train, batchsize)
     test_iter = chainer.iterators.SerialIterator(test, batchsize,
                                                  repeat=False, shuffle=False)
-    model = L.Classifier(Normal(), lossfun=F.softmax_cross_entropy)
+    model = L.Classifier(models.Pt1_Normal.Normal(), lossfun=F.softmax_cross_entropy)
+    #model = L.Classifier(models.VGG.VGG(class_labels))
     opt = chainer.optimizers.SGD(lr=0.01)
     opt.setup(model)
 
@@ -116,7 +82,6 @@ def load_images(IMG_DIR):
 
 def main():
     hotdog_train()
-    #cifar10_train()
 
 
 if __name__ == '__main__':
