@@ -6,6 +6,7 @@ from chainer import optimizers
 from chainer import training
 from chainer.training import extensions
 from chainer import serializers
+from chainer import Variable
 
 from PIL import Image
 import numpy as np
@@ -13,6 +14,8 @@ import numpy as np
 import os
 import glob
 from itertools import chain
+
+import cv2
 
 import models.VGG
 import models.Pt1_Normal
@@ -83,6 +86,26 @@ def load_images(IMG_DIR):
     
     transformed_d = datasets.TransformDataset(d, transform)
     return transformed_d
+    
+
+def inference():
+    model_demo = L.Classifier(models.Pt1_Normal.Normal())
+    serializers.load_npz('my_hotdog.model', model_demo)
+
+    gpu_id = -1
+    if gpu_id >= 0:
+        model_demo.to_gpu(gpu_id)
+    
+    img_cv =cv2.imread('./test.jpg')
+    img = img_cv[:,:,::-1].copy()
+    img_224 = cv2.resize(img, (224, 224))
+
+    X = img_224.transpose(2, 0, 1)
+    x = X.astype(np.float32)
+    x = x/255
+
+    result = model_demo.predictor(Variable(np.array[x]))
+    print(result)
     
 
 def main():
