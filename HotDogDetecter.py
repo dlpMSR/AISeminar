@@ -5,6 +5,7 @@ from chainer import links as L
 from chainer import optimizers
 from chainer import training
 from chainer.training import extensions
+from chainer import serializers
 
 from PIL import Image
 import numpy as np
@@ -50,6 +51,8 @@ def hotdog_train():
                                          x_key='epoch', file_name='accuracy.png'))
     trainer.extend(extensions.dump_graph('main/loss'))
     trainer.run()
+
+    serializers.save_npz('my_hotdog.model', model)
 
 
 def load_images(IMG_DIR):
