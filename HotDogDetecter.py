@@ -30,7 +30,7 @@ def hotdog_train():
 
     batchsize = 16
     epoch = 20
-    gpu_id = -1
+    gpu_id = 0
     #class_labels = 5
 
     train_iter = chainer.iterators.SerialIterator(train, batchsize)
@@ -55,6 +55,7 @@ def hotdog_train():
     trainer.extend(extensions.dump_graph('main/loss'))
     trainer.run()
 
+    model.to_cpu()
     serializers.save_npz('my_hotdog.model', model)
 
 
@@ -94,20 +95,21 @@ def inference():
     if gpu_id >= 0:
         model_demo.to_gpu(gpu_id)
     
-    img_cv =cv2.imread('./test.jpg')
+    img_cv =cv2.imread('./test3.jpg')
     img = img_cv[:,:,::-1].copy()
-    img_224 = cv2.resize(img, (224, 224))
+    img_224 = cv2.resize(img, (128, 128))
 
     X = img_224.transpose(2, 0, 1)
     x = X.astype(np.float32)
     x = x/255
 
-    result = model_demo.predictor(Variable(np.array[x]))
+    result = model_demo.predictor(Variable(np.array([x])))
     print(result)
     
 
 def main():
-    hotdog_train()
+    #hotdog_train()
+    inference()
 
 
 if __name__ == '__main__':
