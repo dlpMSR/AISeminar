@@ -79,7 +79,6 @@ class VGG(chainer.Chain):
         h = self.block5_3(h)
         h = F.max_pooling_2d(h, ksize=2, stride=2)
 
-        h = F.flatten(h)
         h = self.fc1(h)
         h = self.bn_fc1(h)
         h = F.relu(h)
