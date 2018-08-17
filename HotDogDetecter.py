@@ -20,6 +20,7 @@ import cv2
 import models.VGG
 import models.Pt1_Normal
 import models.Pt2_Normalize
+import models.VGG_FORNO
 
 
 def hotdog_train():
