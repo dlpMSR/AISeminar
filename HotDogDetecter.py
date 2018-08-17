@@ -113,11 +113,20 @@ def inference():
     img_cv = capture_camera()
     x = transform(img_cv)
     result = model.predictor(Variable(np.array([x])))
-    print(result)
+    result = result.array
+    pred_label = result.argmax(axis=1)
+
+    if pred_label == 0:
+        print("hotdog")
+    else:
+        print("sushi")    
+    
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 def capture_camera(mirror=True, size=None):
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
     while True:
         ret, frame = cap.read()
         if mirror == True:
@@ -129,7 +138,7 @@ def capture_camera(mirror=True, size=None):
             return frame
             break
     cap.release()
-    cv2.destroyAllWindows()        
+    #cv2.destroyAllWindows()      
 
 
 def main():
