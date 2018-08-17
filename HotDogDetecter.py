@@ -57,11 +57,7 @@ def hotdog_train():
     trainer.run()
 
     model.to_cpu()
-<<<<<<< HEAD
     serializers.save_npz('sushi_hotdog.model', model)
-=======
-    serializers.save_npz('my_hotdog_VGG.model', model)
->>>>>>> 6d7d1dad1f564b40f169be9cf29da5086edb65b4
 
 
 def load_images(IMG_DIR):
@@ -94,29 +90,52 @@ def load_images(IMG_DIR):
 
 def inference():
     class_labels = 2
-    chainer.config.train = False
-    model_demo = L.Classifier(models.VGG.VGG(class_labels))
-    serializers.load_npz('my_hotdog_VGG.model', model_demo)
-
     gpu_id = -1
+    chainer.config.train = False
+    model = L.Classifier(models.VGG.VGG(class_labels))
+    serializers.load_npz('my_hotdog_VGG.model', model)
     if gpu_id >= 0:
-        model_demo.to_gpu(gpu_id)
+        model.to_gpu(gpu_id)
+
+    def load_image():
+        img = cv2.imread('./test.jpg')
+        return img
+
+    def transform(img_cv):
+        img = img_cv[:,:,::-1].copy()
+        img_resized = cv2.resize(img, (224, 224))
+        X = img_resized.transpose(2, 0, 1)
+        x = X.astype(np.float32)
+        x = x/255
+        return x
     
-    img_cv =cv2.imread('./hotdog2.jpg')
-    img = img_cv[:,:,::-1].copy()
-    img_224 = cv2.resize(img, (224, 224))
-
-    X = img_224.transpose(2, 0, 1)
-    x = X.astype(np.float32)
-    x = x/255
-
-    result = model_demo.predictor(Variable(np.array([x])))
+    #img_cv = load_image()
+    img_cv = capture_camera()
+    x = transform(img_cv)
+    result = model.predictor(Variable(np.array([x])))
     print(result)
-    
+
+
+def capture_camera(mirror=True, size=None):
+    cap = cv2.VideoCapture(1)
+    while True:
+        ret, frame = cap.read()
+        if mirror == True:
+            frame = frame[:,::-1]
+        cv2.imshow('webcam', frame)
+        key = cv2.waitKey(1)
+        
+        if key == ord('c'):
+            return frame
+            break
+    cap.release()
+    cv2.destroyAllWindows()        
+
 
 def main():
-    hotdog_train()
-    #inference()
+    #hotdog_train()
+    inference()
+    #capture_camera()
 
 
 if __name__ == '__main__':
