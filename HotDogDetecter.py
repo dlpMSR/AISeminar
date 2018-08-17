@@ -89,24 +89,31 @@ def load_images(IMG_DIR):
     
 
 def inference():
-    model_demo = L.Classifier(models.Pt1_Normal.Normal())
-    serializers.load_npz('my_hotdog.model', model_demo)
-
+    class_labels = 2
     gpu_id = -1
+    chainer.config.train = False
+    model = L.Classifier(models.VGG.VGG(class_labels))
+    serializers.load_npz('my_hotdog_VGG.model', model)
     if gpu_id >= 0:
-        model_demo.to_gpu(gpu_id)
+        model.to_gpu(gpu_id)
+
+    def load_image():
+        img = cv2.imread('./test.jpg')
+        return img
+
+    def transform(img_cv):
+        img = img_cv[:,:,::-1].copy()
+        img_resized = cv2.resize(img, (224, 224))
+        X = img_resized.transpose(2, 0, 1)
+        x = X.astype(np.float32)
+        x = x/255
+        return x
     
-    img_cv =cv2.imread('./test3.jpg')
-    img = img_cv[:,:,::-1].copy()
-    img_224 = cv2.resize(img, (128, 128))
-
-    X = img_224.transpose(2, 0, 1)
-    x = X.astype(np.float32)
-    x = x/255
-
-    result = model_demo.predictor(Variable(np.array([x])))
+    img_cv = load_image()
+    x = transform(img_cv)
+    result = model.predictor(Variable(np.array([x])))
     print(result)
-    
+
 
 def main():
     #hotdog_train()
