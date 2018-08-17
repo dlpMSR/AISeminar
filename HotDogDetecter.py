@@ -20,6 +20,7 @@ import cv2
 import models.VGG
 import models.Pt1_Normal
 import models.Pt2_Normalize
+import models.VGG_FORNO
 
 
 def hotdog_train():
@@ -92,8 +93,8 @@ def inference():
     class_labels = 2
     gpu_id = -1
     chainer.config.train = False
-    model = L.Classifier(models.VGG.VGG(class_labels))
-    serializers.load_npz('my_hotdog_VGG.model', model)
+    model = L.Classifier(models.VGG_FORNO.VGG(class_labels))
+    serializers.load_npz('./hotdog_FORNO.model', model)
     if gpu_id >= 0:
         model.to_gpu(gpu_id)
 
@@ -119,7 +120,7 @@ def inference():
     if pred_label == 0:
         print("hotdog")
     else:
-        print("sushi")    
+        print("Not hotdog")    
     
     cv2.waitKey(0)
     cv2.destroyAllWindows()
