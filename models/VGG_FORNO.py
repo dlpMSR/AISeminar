@@ -36,9 +36,11 @@ class VGG(chainer.Chain):
             self.block5_1 = Block(512, 3)
             self.block5_2 = Block(512, 3)
             self.block5_3 = Block(512, 3)
-            self.fc1 = L.Linear(None, 512, nobias=True)
-            self.bn_fc1 = L.BatchNormalization(512)
-            self.fc2 = L.Linear(None, class_labels, nobias=True)
+            self.fc1 = L.Linear(None, 256, nobias=True)
+            self.bn_fc1 = L.BatchNormalization(4096)
+            self.fc2 = L.Linear(None, 256, nobias=True)
+            self.bn_fc2 = L.BatchNormalization(4096)
+            self.out = L.Linear(None, class_labels, nobias=True)
 
     def __call__(self, x):
         # 64 channel blocks:
@@ -77,9 +79,13 @@ class VGG(chainer.Chain):
         h = self.block5_3(h)
         h = F.max_pooling_2d(h, ksize=2, stride=2)
 
-        h = F.dropout(h, ratio=0.5)
+        h = F.flatten(h)
         h = self.fc1(h)
         h = self.bn_fc1(h)
         h = F.relu(h)
         h = F.dropout(h, ratio=0.5)
-        return self.fc2(h)
+        h = self.fc2(h)
+        h = self.bn_fc2(h)
+        h = F.relu(h)
+        h = F.dropout(h, ratio=0.5)
+        return F.softmax(self.out(h))
