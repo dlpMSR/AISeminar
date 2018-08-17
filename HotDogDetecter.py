@@ -57,7 +57,11 @@ def hotdog_train():
     trainer.run()
 
     model.to_cpu()
+<<<<<<< HEAD
     serializers.save_npz('sushi_hotdog.model', model)
+=======
+    serializers.save_npz('my_hotdog_VGG.model', model)
+>>>>>>> 6d7d1dad1f564b40f169be9cf29da5086edb65b4
 
 
 def load_images(IMG_DIR):
