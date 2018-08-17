@@ -109,15 +109,33 @@ def inference():
         x = x/255
         return x
     
-    img_cv = load_image()
+    #img_cv = load_image()
+    img_cv = capture_camera()
     x = transform(img_cv)
     result = model.predictor(Variable(np.array([x])))
     print(result)
 
 
+def capture_camera(mirror=True, size=None):
+    cap = cv2.VideoCapture(1)
+    while True:
+        ret, frame = cap.read()
+        if mirror == True:
+            frame = frame[:,::-1]
+        cv2.imshow('webcam', frame)
+        key = cv2.waitKey(1)
+        
+        if key == ord('c'):
+            return frame
+            break
+    cap.release()
+    cv2.destroyAllWindows()        
+
+
 def main():
     #hotdog_train()
     inference()
+    #capture_camera()
 
 
 if __name__ == '__main__':
