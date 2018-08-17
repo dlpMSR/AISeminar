@@ -37,9 +37,9 @@ class VGG(chainer.Chain):
             self.block5_2 = Block(512, 3)
             self.block5_3 = Block(512, 3)
             self.fc1 = L.Linear(None, 256, nobias=True)
-            self.bn_fc1 = L.BatchNormalization(4096)
+            self.bn_fc1 = L.BatchNormalization(256)
             self.fc2 = L.Linear(None, 256, nobias=True)
-            self.bn_fc2 = L.BatchNormalization(4096)
+            self.bn_fc2 = L.BatchNormalization(256)
             self.out = L.Linear(None, class_labels, nobias=True)
 
     def __call__(self, x):
