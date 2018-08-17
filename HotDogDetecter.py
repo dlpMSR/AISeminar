@@ -29,9 +29,15 @@ def hotdog_train():
     train, test = datasets.split_dataset_random(dataset, int(len(dataset) * 0.7))
 
     batchsize = 16
+<<<<<<< HEAD
     epoch = 500
     gpu_id = 0
     class_labels = 2
+=======
+    epoch = 20
+    gpu_id = 0
+    #class_labels = 5
+>>>>>>> モデルを読みだして推論するやつつくった
 
     train_iter = chainer.iterators.SerialIterator(train, batchsize)
     test_iter = chainer.iterators.SerialIterator(test, batchsize,
@@ -57,7 +63,11 @@ def hotdog_train():
     trainer.run()
 
     model.to_cpu()
+<<<<<<< HEAD
     serializers.save_npz('my_hotdog_VGG.model', model)
+=======
+    serializers.save_npz('my_hotdog.model', model)
+>>>>>>> モデルを読みだして推論するやつつくった
 
 
 def load_images(IMG_DIR):
@@ -96,20 +106,21 @@ def inference():
     if gpu_id >= 0:
         model_demo.to_gpu(gpu_id)
     
-    img_cv =cv2.imread('./test.jpg')
+    img_cv =cv2.imread('./test3.jpg')
     img = img_cv[:,:,::-1].copy()
-    img_224 = cv2.resize(img, (224, 224))
+    img_224 = cv2.resize(img, (128, 128))
 
     X = img_224.transpose(2, 0, 1)
     x = X.astype(np.float32)
     x = x/255
 
-    result = model_demo.predictor(Variable(np.array[x]))
+    result = model_demo.predictor(Variable(np.array([x])))
     print(result)
     
 
 def main():
-    hotdog_train()
+    #hotdog_train()
+    inference()
 
 
 if __name__ == '__main__':
