@@ -25,8 +25,8 @@ import models.Pt2_Normalize
 def hotdog_train():
     #train = load_images('./data/train')
     #test = load_images('./data/test')
-    dataset = load_images('./data/')
-    train, test = datasets.split_dataset_random(dataset, int(len(dataset) * 0.7))
+    dataset = load_images('./data/sushi_hotdog')
+    train, test = datasets.split_dataset_random(dataset, int(len(dataset) * 0.8))
 
     batchsize = 16
     epoch = 500
@@ -57,7 +57,7 @@ def hotdog_train():
     trainer.run()
 
     model.to_cpu()
-    serializers.save_npz('my_hotdog_VGG.model', model)
+    serializers.save_npz('sushi_hotdog.model', model)
 
 
 def load_images(IMG_DIR):
@@ -89,14 +89,16 @@ def load_images(IMG_DIR):
     
 
 def inference():
-    model_demo = L.Classifier(models.Pt1_Normal.Normal())
-    serializers.load_npz('my_hotdog.model', model_demo)
+    class_labels = 2
+    chainer.config.train = False
+    model_demo = L.Classifier(models.VGG.VGG(class_labels))
+    serializers.load_npz('my_hotdog_VGG.model', model_demo)
 
     gpu_id = -1
     if gpu_id >= 0:
         model_demo.to_gpu(gpu_id)
     
-    img_cv =cv2.imread('./test.jpg')
+    img_cv =cv2.imread('./hotdog2.jpg')
     img = img_cv[:,:,::-1].copy()
     img_224 = cv2.resize(img, (224, 224))
 
@@ -104,12 +106,13 @@ def inference():
     x = X.astype(np.float32)
     x = x/255
 
-    result = model_demo.predictor(Variable(np.array[x]))
+    result = model_demo.predictor(Variable(np.array([x])))
     print(result)
     
 
 def main():
     hotdog_train()
+    #inference()
 
 
 if __name__ == '__main__':
