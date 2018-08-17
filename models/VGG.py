@@ -36,9 +36,9 @@ class VGG(chainer.Chain):
             self.block5_1 = Block(512, 3)
             self.block5_2 = Block(512, 3)
             self.block5_3 = Block(512, 3)
-            self.fc1 = L.Linear(None, 4096, nobias=True)
+            self.fc1 = L.Linear(None, 256, nobias=True)
             self.bn_fc1 = L.BatchNormalization(4096)
-            self.fc2 = L.Linear(None, 4096, nobias=True)
+            self.fc2 = L.Linear(None, 256, nobias=True)
             self.bn_fc2 = L.BatchNormalization(4096)
             self.out = L.Linear(None, class_labels, nobias=True)
 
@@ -88,4 +88,4 @@ class VGG(chainer.Chain):
         h = self.bn_fc2(h)
         h = F.relu(h)
         h = F.dropout(h, ratio=0.5)
-        return F.sigmoid(self.out(h))
+        return F.softmax(self.out(h))
