@@ -20,6 +20,7 @@ import cv2
 import models.VGG
 import models.Pt1_Normal
 import models.Pt2_Normalize
+import models.VGG_FORNO
 
 
 def hotdog_train():
@@ -92,8 +93,8 @@ def inference():
     class_labels = 2
     gpu_id = -1
     chainer.config.train = False
-    model = L.Classifier(models.VGG.VGG(class_labels))
-    serializers.load_npz('my_hotdog_VGG.model', model)
+    model = L.Classifier(models.VGG_FORNO.VGG(class_labels))
+    serializers.load_npz('./hotdog_FORNO.model', model)
     if gpu_id >= 0:
         model.to_gpu(gpu_id)
 
@@ -113,11 +114,20 @@ def inference():
     img_cv = capture_camera()
     x = transform(img_cv)
     result = model.predictor(Variable(np.array([x])))
-    print(result)
+    result = result.array
+    pred_label = result.argmax(axis=1)
+
+    if pred_label == 0:
+        print("hotdog")
+    else:
+        print("Not hotdog")    
+    
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 def capture_camera(mirror=True, size=None):
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
     while True:
         ret, frame = cap.read()
         if mirror == True:
@@ -129,7 +139,7 @@ def capture_camera(mirror=True, size=None):
             return frame
             break
     cap.release()
-    cv2.destroyAllWindows()        
+    #cv2.destroyAllWindows()      
 
 
 def main():
